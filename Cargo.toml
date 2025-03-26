@@ -1,0 +1,68 @@
+[workspace]
+resolver = "2"
+members = ["ctp-common",
+          "ctp-common-tts",
+          "ctp-md", 
+          "ctp-md-qq",
+          "ctp-md-sina",
+          "ctp-trader", 
+          "openctp-trader", 
+          "qars",
+          "xtp-rs", 
+          "qamd-rs", 
+          "qamdgateway", 
+          "qamdgateway-ctp",
+          "qamdgateway-qq",
+          "qamdgateway-sina",
+          "qifi-rs"]
+[workspace.dependencies]
+rayon = "1.5"
+thiserror = "^1"
+num = "0.4"
+ahash = "0.8"
+xxhash-rust = { version = "0.8.6", features = ["xxh3"] }
+# todo! remove
+anyhow = "1"
+hashbrown = { version = "0.13.1", features = ["rayon", "ahash"] }
+bitflags = "1.3"
+rustc-serialize = "0.3.25"
+
+once_cell = "1"
+serde_json = "1.0.73"
+serde_derive = "1.0"
+serde = { version = "1.0", features = ["derive"] } # 序列化
+
+
+[workspace.dependencies.arrow]
+package = "arrow2"
+git = "https://github.com/ritchie46/arrow2"
+
+branch = "mmap_slice2"
+version = "0.15"
+default-features = false
+features = [
+  "compute_aggregate",
+  "compute_arithmetics",
+  "compute_boolean",
+  "compute_boolean_kleene",
+  "compute_cast",
+  "compute_comparison",
+  "compute_concatenate",
+  "compute_filter",
+  "compute_if_then_else",
+]
+
+
+[patch.crates-io]
+# packed_simd_2 = { git = "https://github.com/rust-lang/packed_simd", rev = "e57c7ba11386147e6d2cbad7c88f376aab4bdc86" }
+
+[workspace.package]
+version = "0.39.2"
+
+[profile.dev]
+opt-level = 0
+debug = true
+
+[profile.release]
+opt-level = 3
+debug = false

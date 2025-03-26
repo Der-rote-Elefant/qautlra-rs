@@ -1,0 +1,13 @@
+[package]
+name = "ctp-md-qq"
+version = "0.0.1"
+authors = ["Wangshan Lu <wisagan@gmail.com>"]
+edition = "2021"
+links = "ctp-md-qq"
+
+[features]
+channel = ["crossbeam-channel"]
+
+[dependencies]
+crossbeam-channel = { version = "0.5.0", optional = true }
+ctp-common = { path = "../ctp-common" }

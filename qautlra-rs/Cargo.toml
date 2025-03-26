@@ -1,0 +1,59 @@
+[package]
+name = "qautlra-rs"
+edition = "2021"
+version = "0.1.0"
+
+[features]
+default = ["websocket-server"]
+websocket-server = ["actix-web", "actix", "actix-web-actors", "env_logger"]
+channel = ["crossbeam-channel"]
+
+[dependencies]
+crossbeam-channel = { version = "0.4.0", optional = true }
+actix-web-actors = { version = "4.1", default-features = false, optional = true }
+actix = { version = "0.13", optional = true }
+actix-web = { version = "4", optional = true }
+env_logger = { version = "0.9", optional = true }
+bus ="2.3.0"
+regex = "1"
+hashbrown = {version="0.12", features=['serde', 'rayon']}
+reindeer ="0.2.7"
+bson = "0.13.0"
+serde_json = "1.0.73"
+serde_derive = "1.0"
+serde = { version = "1.0", features = ["derive"] }
+rayon = "1.6"
+kekbit = "0.3.4"
+sled ="0.34.7"
+moka = { version = "0.9", features = ["future"] }
+chrono-tz = { version = "0.5.3", features = ["serde"] }
+chrono = { version = "0.4.19", features = ["serde"] }
+qatask ={path = "../qatask", version ="0.1.0"}
+polars-plan ={version="0.39.2"}
+glob = "0.3.0"
+polars-io ={version="0.39.2", features=["parquet"]}
+polars = { version ="0.39.2", features = ["abs", "lazy", "strings", "temporal"] }
+
+arrow2 ={git = "https://github.com/ritchie46/arrow2",branch = "polars_2022-12-30", version = "0.15"}
+rand = "0.8.5"
+#libduckdb-sys = { version = "0.6.1", features = ["bundled"] }
+#[dependencies.duckdb]
+#version = "0.6.1"
+#features = ["bundled","modern-full",]
+
+[dependencies.ctp-common]
+version = "0.9.0"
+path = "../ctp-common"
+
+[dependencies.ctp-md]
+version = "0.10.0"
+path = "../ctp-md"
+
+[dependencies.ctp-trader]
+version = "0.10.0"
+path = "../ctp-trader"
+
+[dev-dependencies]
+simple-error = "0.2.0"
+serde = { version = "1.0.91", features = [ "derive" ] }
+serde_yaml = "0.8.9"

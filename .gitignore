@@ -1,0 +1,15 @@
+Cargo.lock
+target
+*.con
+config*.yml
+user_data/*
+*.txt
+*.log
+*.csv
+*.parquet
+*.pq
+*.out
+py-polars/
+
+qafactor-rs/
+qarsdb/

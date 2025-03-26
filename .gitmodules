@@ -1,0 +1,3 @@
+[submodule "api-ctp"]
+	path = api-ctp
+	url = https://gitlab.com/WiSaGaN/api-ctp.git

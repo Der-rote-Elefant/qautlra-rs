@@ -1,0 +1,13 @@
+[package]
+name = "ctp-common"
+version = "0.9.0"
+authors = ["Wangshan Lu <wisagan@gmail.com>"]
+edition = "2018"
+
+[dependencies]
+encoding = "0.2.33"
+memchr = "2.3.3"
+simple-error = "0.2.1"
+time = "0.1.43"
+serde = { version = "1.0.104", features = ["derive"] }
+rkyv = { version = "0.7.42", features = ["validation"] }

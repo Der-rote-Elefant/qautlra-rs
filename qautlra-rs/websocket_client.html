@@ -1,0 +1,365 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>CTP Market Data WebSocket Client</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 20px;
+            line-height: 1.6;
+        }
+        #container {
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+        #controls {
+            margin-bottom: 20px;
+            padding: 15px;
+            background-color: #f5f5f5;
+            border-radius: 5px;
+        }
+        input {
+            padding: 8px;
+            margin-right: 10px;
+            border: 1px solid #ccc;
+            border-radius: 3px;
+        }
+        button {
+            padding: 8px 12px;
+            background-color: #4CAF50;
+            color: white;
+            border: none;
+            border-radius: 3px;
+            cursor: pointer;
+        }
+        button:hover {
+            background-color: #45a049;
+        }
+        #connectionStatus {
+            margin-bottom: 10px;
+            font-weight: bold;
+        }
+        .connected {
+            color: green;
+        }
+        .disconnected {
+            color: red;
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 20px;
+        }
+        th, td {
+            padding: 12px;
+            text-align: left;
+            border-bottom: 1px solid #ddd;
+        }
+        th {
+            background-color: #f2f2f2;
+        }
+        tr:hover {
+            background-color: #f5f5f5;
+        }
+        #log {
+            margin-top: 20px;
+            border: 1px solid #ddd;
+            padding: 10px;
+            height: 150px;
+            overflow-y: auto;
+            background-color: #f9f9f9;
+        }
+    </style>
+</head>
+<body>
+    <div id="container">
+        <h1>CTP Market Data WebSocket Client</h1>
+        
+        <div id="controls">
+            <div id="connectionStatus" class="disconnected">Status: Disconnected</div>
+            <div>
+                <button id="connectBtn">Connect</button>
+                <button id="disconnectBtn" disabled>Disconnect</button>
+            </div>
+            <div style="margin-top: 10px;">
+                <input id="symbolInput" type="text" placeholder="Enter symbol (e.g., IF2109)" />
+                <button id="subscribeBtn" disabled>Subscribe</button>
+                <button id="unsubscribeBtn" disabled>Unsubscribe</button>
+            </div>
+        </div>
+        
+        <h2>Market Data</h2>
+        <table id="marketDataTable">
+            <thead>
+                <tr>
+                    <th>Instrument</th>
+                    <th>Last Price</th>
+                    <th>Bid Price</th>
+                    <th>Bid Volume</th>
+                    <th>Ask Price</th>
+                    <th>Ask Volume</th>
+                    <th>Volume</th>
+                    <th>Open Interest</th>
+                    <th>Update Time</th>
+                </tr>
+            </thead>
+            <tbody id="marketDataBody">
+                <!-- Market data will be inserted here -->
+            </tbody>
+        </table>
+        
+        <h2>Log</h2>
+        <div id="log"></div>
+    </div>
+
+    <script>
+        let socket = null;
+        let subscriptions = new Set();
+        let marketData = {};
+        
+        // DOM elements
+        const connectBtn = document.getElementById('connectBtn');
+        const disconnectBtn = document.getElementById('disconnectBtn');
+        const subscribeBtn = document.getElementById('subscribeBtn');
+        const unsubscribeBtn = document.getElementById('unsubscribeBtn');
+        const symbolInput = document.getElementById('symbolInput');
+        const connectionStatus = document.getElementById('connectionStatus');
+        const marketDataBody = document.getElementById('marketDataBody');
+        const logElement = document.getElementById('log');
+        
+        // Connect to WebSocket server
+        function connect() {
+            // Use the correct WebSocket URL
+            // Replace with your server address if different
+            const wsUrl = 'ws://' + window.location.hostname + ':8080/ws/marketdata';
+            
+            log('Connecting to ' + wsUrl);
+            socket = new WebSocket(wsUrl);
+            
+            socket.onopen = function() {
+                log('Connected to WebSocket server');
+                connectionStatus.textContent = 'Status: Connected';
+                connectionStatus.className = 'connected';
+                
+                connectBtn.disabled = true;
+                disconnectBtn.disabled = false;
+                subscribeBtn.disabled = false;
+                unsubscribeBtn.disabled = false;
+                
+                // Resubscribe to previous symbols if any
+                if (subscriptions.size > 0) {
+                    const symbols = Array.from(subscriptions);
+                    subscribe(symbols);
+                }
+            };
+            
+            socket.onclose = function() {
+                log('Disconnected from WebSocket server');
+                connectionStatus.textContent = 'Status: Disconnected';
+                connectionStatus.className = 'disconnected';
+                
+                connectBtn.disabled = false;
+                disconnectBtn.disabled = true;
+                subscribeBtn.disabled = true;
+                unsubscribeBtn.disabled = true;
+                
+                socket = null;
+            };
+            
+            socket.onerror = function(error) {
+                log('WebSocket error: ' + error);
+            };
+            
+            socket.onmessage = function(event) {
+                const message = JSON.parse(event.data);
+                
+                if (message.topic === 'marketdata') {
+                    // Handle market data
+                    updateMarketData(message.data);
+                } else if (message.topic === 'subscribe' || message.topic === 'unsubscribe') {
+                    // Handle subscription response
+                    log(message.topic + ' response: ' + JSON.stringify(message.data));
+                } else if (message.topic === 'error') {
+                    // Handle error
+                    log('Error: ' + message.data);
+                }
+            };
+        }
+        
+        // Disconnect from WebSocket server
+        function disconnect() {
+            if (socket) {
+                socket.close();
+            }
+        }
+        
+        // Subscribe to market data
+        function subscribe(symbols) {
+            if (!socket || socket.readyState !== WebSocket.OPEN) {
+                log('Not connected to WebSocket server');
+                return;
+            }
+            
+            if (!Array.isArray(symbols)) {
+                symbols = [symbols];
+            }
+            
+            // Add to subscriptions set
+            symbols.forEach(symbol => subscriptions.add(symbol));
+            
+            const request = {
+                op: 'subscribe',
+                symbols: symbols
+            };
+            
+            socket.send(JSON.stringify(request));
+            log('Subscribing to symbols: ' + symbols.join(', '));
+        }
+        
+        // Unsubscribe from market data
+        function unsubscribe(symbols) {
+            if (!socket || socket.readyState !== WebSocket.OPEN) {
+                log('Not connected to WebSocket server');
+                return;
+            }
+            
+            if (!Array.isArray(symbols)) {
+                symbols = [symbols];
+            }
+            
+            // Remove from subscriptions set
+            symbols.forEach(symbol => subscriptions.delete(symbol));
+            
+            const request = {
+                op: 'unsubscribe',
+                symbols: symbols
+            };
+            
+            socket.send(JSON.stringify(request));
+            log('Unsubscribing from symbols: ' + symbols.join(', '));
+        }
+        
+        // Update market data in the table
+        function updateMarketData(data) {
+            const instrumentId = data.instrument_id;
+            
+            // Store the data
+            marketData[instrumentId] = data;
+            
+            // Update the table
+            renderMarketDataTable();
+        }
+        
+        // Render the market data table
+        function renderMarketDataTable() {
+            // Clear the table
+            marketDataBody.innerHTML = '';
+            
+            // Add data for each instrument
+            for (const instrumentId in marketData) {
+                const data = marketData[instrumentId];
+                
+                const row = document.createElement('tr');
+                
+                // Instrument
+                const instrumentCell = document.createElement('td');
+                instrumentCell.textContent = data.instrument_id;
+                row.appendChild(instrumentCell);
+                
+                // Last Price
+                const lastPriceCell = document.createElement('td');
+                lastPriceCell.textContent = data.last_price.toFixed(2);
+                row.appendChild(lastPriceCell);
+                
+                // Bid Price
+                const bidPriceCell = document.createElement('td');
+                bidPriceCell.textContent = data.bid_price1.toFixed(2);
+                row.appendChild(bidPriceCell);
+                
+                // Bid Volume
+                const bidVolumeCell = document.createElement('td');
+                bidVolumeCell.textContent = data.bid_volume1;
+                row.appendChild(bidVolumeCell);
+                
+                // Ask Price
+                const askPriceCell = document.createElement('td');
+                askPriceCell.textContent = data.ask_price1.toFixed(2);
+                row.appendChild(askPriceCell);
+                
+                // Ask Volume
+                const askVolumeCell = document.createElement('td');
+                askVolumeCell.textContent = data.ask_volume1;
+                row.appendChild(askVolumeCell);
+                
+                // Volume
+                const volumeCell = document.createElement('td');
+                volumeCell.textContent = data.volume;
+                row.appendChild(volumeCell);
+                
+                // Open Interest
+                const openInterestCell = document.createElement('td');
+                openInterestCell.textContent = data.open_interest;
+                row.appendChild(openInterestCell);
+                
+                // Update Time
+                const updateTimeCell = document.createElement('td');
+                updateTimeCell.textContent = data.update_time + ':' + data.update_millisec;
+                row.appendChild(updateTimeCell);
+                
+                marketDataBody.appendChild(row);
+            }
+        }
+        
+        // Log a message
+        function log(message) {
+            const time = new Date().toLocaleTimeString();
+            const logMessage = time + ' - ' + message;
+            
+            const logLine = document.createElement('div');
+            logLine.textContent = logMessage;
+            
+            logElement.appendChild(logLine);
+            logElement.scrollTop = logElement.scrollHeight;
+            
+            console.log(logMessage);
+        }
+        
+        // Event listeners
+        connectBtn.addEventListener('click', function() {
+            connect();
+        });
+        
+        disconnectBtn.addEventListener('click', function() {
+            disconnect();
+        });
+        
+        subscribeBtn.addEventListener('click', function() {
+            const symbol = symbolInput.value.trim();
+            if (symbol) {
+                subscribe(symbol);
+                symbolInput.value = '';
+            }
+        });
+        
+        unsubscribeBtn.addEventListener('click', function() {
+            const symbol = symbolInput.value.trim();
+            if (symbol) {
+                unsubscribe(symbol);
+                symbolInput.value = '';
+                
+                // Remove from market data if present
+                if (marketData[symbol]) {
+                    delete marketData[symbol];
+                    renderMarketDataTable();
+                }
+            }
+        });
+        
+        symbolInput.addEventListener('keypress', function(event) {
+            if (event.key === 'Enter') {
+                subscribeBtn.click();
+            }
+        });
+    </script>
+</body>
+</html> 
