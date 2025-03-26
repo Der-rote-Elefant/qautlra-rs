@@ -24,6 +24,19 @@ QAUTLRA-RS由以下主要组件构成：
 
 ### 1. QAMDGATEWAY - 市场数据网关
 
+```
+写在前面：
+
+首先致谢罗总的openctp提供的标准的行情接入 更多openctp的相关可以参考
+
+openctp 官网 [http://www.openctp.cn/]
+
+openctp 的github  [https://github.com/openctp/openctp]
+
+@yutiansut 
+
+```
+
 市场数据网关是整个系统的数据入口，负责连接各类市场数据源，并将数据转换为统一格式后分发给订阅者。
 
 **主要功能**:
