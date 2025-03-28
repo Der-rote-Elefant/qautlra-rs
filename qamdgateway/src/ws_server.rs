@@ -456,65 +456,33 @@ impl Handler<MarketDataUpdateMessage> for WsSession {
                         let mut quotes = HashMap::new();
                         
                         // 从data_value提取字段创建TvQuote
-                        let tv_quote = TvQuote {
-                            instrument_id: instrument.clone(),
-                            datetime: format!("{} {}", 
-                                data_value["action_day"].as_str().unwrap_or(""),
-                                data_value["update_time"].as_str().unwrap_or("")),
-                            last_price: data_value["last_price"].as_f64().unwrap_or(0.0),
-                            volume: data_value["volume"].as_i64().unwrap_or(0),
-                            amount: data_value["turnover"].as_f64().unwrap_or(0.0),
-                            open: data_value["open_price"].as_f64().unwrap_or(0.0),
-                            high: data_value["highest_price"].as_f64().unwrap_or(0.0),
-                            low: data_value["lowest_price"].as_f64().unwrap_or(0.0),
-                            bid_price1: data_value["bid_price1"].as_f64().unwrap_or(0.0),
-                            bid_volume1: data_value["bid_volume1"].as_i64().unwrap_or(0),
-                            ask_price1: data_value["ask_price1"].as_f64().unwrap_or(0.0),
-                            ask_volume1: data_value["ask_volume1"].as_i64().unwrap_or(0),
-                            volume_multiple: 1,
-                            price_tick: 0.01,
-                            price_decs: 2,
-                            open_interest: data_value["open_interest"].as_i64().unwrap_or(0),
-                            max_market_order_volume: 0,
-                            min_market_order_volume: 0,
-                            max_limit_order_volume: 0,
-                            min_limit_order_volume: 0,
-                            margin: 0.0,
-                            commission: 0.0,
-                            upper_limit: data_value["upper_limit_price"].as_f64().unwrap_or(0.0),
-                            lower_limit: data_value["lower_limit_price"].as_f64().unwrap_or(0.0),
-                            pre_close: data_value["pre_close_price"].as_f64().unwrap_or(0.0),
-                            pre_settlement: data_value["pre_settlement_price"].as_f64().unwrap_or(0.0),
-                            pre_open_interest: data_value["pre_open_interest"].as_i64().unwrap_or(0),
-                            close: data_value["close_price"].as_f64().unwrap_or(0.0),
-                            settlement: data_value["settlement_price"].as_f64().unwrap_or(0.0),
-                            average: data_value["average_price"].as_f64().unwrap_or(0.0),
-                        };
-                        
-                        quotes.insert(instrument.clone(), tv_quote);
-                        
-                        // 创建并发送TradingView格式的消息
-                        let tv_item = TvMarketDataItem { quotes };
-                        let tv_message = WsServerMessage::TvMarketData {
-                            aid: "rtn_data".to_string(),
-                            data: vec![tv_item],
-                        };
-                        
-                        if let Ok(json) = serde_json::to_string(&tv_message) {
-                            ctx.text(json);
-                        }
-                        
-                        // 同时也创建并发送传统格式的消息
-                        // 这里我们需要将JSON数据转换回MDSnapshot结构
-                        if let Ok(snapshot) = serde_json::from_value::<qamd_rs::MDSnapshot>(data_value.clone()) {
-                            let legacy_message = WsServerMessage::LegacyMessage(LegacyServerMessage::MarketData {
-                                data: snapshot,
+                        // 注意：这里的数据可能是增量的，只包含变化的字段
+                        if let Some(instrument_id) = data_value.get("instrument_id").and_then(|v| v.as_str()) {
+                            // 只处理拥有instrument_id字段的数据
+                            quotes.insert(instrument_id.to_string(), data_value.clone());
+                            
+                            // 创建TradingView格式的市场数据响应
+                            let tv_market_data = json!({
+                                "aid": "rtn_data",
+                                "data": [
+                                    {
+                                        "quotes": quotes
+                                    }
+                                ]
                             });
                             
-                            if let Ok(json) = serde_json::to_string(&legacy_message) {
-                                ctx.text(json);
+                            // 将响应发送给客户端
+                            if let Ok(json_str) = serde_json::to_string(&tv_market_data) {
+                                ctx.text(json_str);
+                                debug!("Sent market data update for {} to client {}", instrument, self.client_id);
+                            } else {
+                                error!("Failed to serialize market data for {}", instrument);
                             }
+                        } else {
+                            error!("Market data missing instrument_id field: {}", data_json);
                         }
+                    } else {
+                        error!("Failed to parse market data JSON for {}: {}", instrument, data_json);
                     }
                 }
             }

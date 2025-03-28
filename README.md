@@ -13,6 +13,7 @@ QAUTLRA-RS项目旨在构建一个完整的量化交易技术栈，充分利用R
 - **高性能架构**：基于Rust语言开发，实现毫秒级低延迟数据处理
 - **多源数据接入**：支持CTP、新浪财经、腾讯财经等多种市场数据源
 - **实时行情分发**：基于WebSocket的高效行情数据推送
+- **增量数据更新**：首次连接发送全量数据，之后仅推送变化的字段，大幅减少带宽消耗
 - **统一数据格式**：标准化不同来源的市场数据，提供一致的数据接口
 - **分布式设计**：基于Actor模型的分布式并发处理架构
 - **安全可靠**：充分利用Rust的内存安全特性，提供稳定可靠的运行环境
@@ -44,6 +45,7 @@ openctp 的github  [https://github.com/openctp/openctp]
 - 将原始市场数据转换为标准QAMD数据结构
 - 通过WebSocket实时推送行情数据
 - 提供REST API用于订阅管理
+- 支持增量数据更新，大幅提升性能和减少网络流量
 
 **子组件**:
 - **qamdgateway-ctp**: 连接CTP交易系统的市场数据网关
@@ -198,6 +200,11 @@ npm run dev
   "rest_api": {
     "host": "0.0.0.0",
     "port": 8015
+  },
+  "incremental_updates": {
+    "enabled": true,
+    "batch_interval_ms": 100,
+    "batch_size_threshold": 50
   }
 }
 ```
@@ -231,6 +238,38 @@ ws.onopen = function() {
 ws.onmessage = function(evt) {
   const data = JSON.parse(evt.data);
   console.log("接收到行情数据:", data);
+};
+```
+
+#### 处理增量数据更新
+
+```javascript
+// 客户端维护完整的行情快照
+const marketDataSnapshots = {};
+
+ws.onmessage = function(evt) {
+  const message = JSON.parse(evt.data);
+  
+  // 处理TradingView格式的数据
+  if (message.aid === "rtn_data" && message.data && message.data.length > 0) {
+    const quotes = message.data[0].quotes;
+    
+    // 更新本地快照
+    for (const [symbol, quoteData] of Object.entries(quotes)) {
+      // 如果是新合约，创建新快照
+      if (!marketDataSnapshots[symbol]) {
+        marketDataSnapshots[symbol] = {};
+      }
+      
+      // 更新快照中变化的字段
+      for (const [field, value] of Object.entries(quoteData)) {
+        marketDataSnapshots[symbol][field] = value;
+      }
+      
+      // 使用更新后的完整快照
+      console.log(`更新后的${symbol}快照:`, marketDataSnapshots[symbol]);
+    }
+  }
 };
 ```
 
