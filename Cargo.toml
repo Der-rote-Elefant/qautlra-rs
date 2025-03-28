@@ -14,8 +14,8 @@ members = ["ctp-common",
           "qamdgateway-ctp",
           "qamdgateway-qq",
           "qamdgateway-sina",
-]
-          #"qifi-rs"]
+        #  "qadb-rs",]
+          #"qifi-rs"
 [workspace.dependencies]
 rayon = "1.5"
 thiserror = "^1"
