@@ -13,3 +13,6 @@ py-polars/
 
 qafactor-rs/
 qarsdb/
+
+data/
+staging/

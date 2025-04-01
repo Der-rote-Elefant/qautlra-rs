@@ -8,14 +8,16 @@ members = ["ctp-common",
           "ctp-trader", 
           "openctp-trader", 
           #"qars",
+          #"qadb-rs"
+          #"qifi-rs"
+          # qamdgateway-client
           "xtp-rs", 
           "qamd-rs", 
           "qamdgateway", 
           "qamdgateway-ctp",
           "qamdgateway-qq",
-          "qamdgateway-sina",
-        #  "qadb-rs",]
-          #"qifi-rs"
+          "qamdgateway-sina"]
+
 [workspace.dependencies]
 rayon = "1.5"
 thiserror = "^1"
