@@ -1,128 +1,183 @@
 # QAUTLRA-RS
 
-QAUTLRA-RS是一个基于Rust实现的高性能量化交易和市场数据处理平台，为金融市场分析和交易提供完整的技术基础设施。
+QAUTLRA-RS (Quantitative Analysis and Ultra-Low-latency Trading in Rust for Advanced Systems) is a high-performance quantitative trading and market data processing platform implemented in Rust, providing a complete technical infrastructure for financial market analysis and trading.
 
 ![QAUTLRA-RS](qars/QUANTAXISRS.png)
 
-## 🚀 项目概述
+## 🚀 Project Overview
 
-QAUTLRA-RS项目旨在构建一个完整的量化交易技术栈，充分利用Rust语言的高性能、内存安全和并发特性，为量化交易提供可靠的技术支持。平台由多个独立但协同工作的子系统组成，支持从市场数据接入、行情分发、策略执行到交易执行的完整量化交易流程。
+QAUTLRA-RS aims to build a complete quantitative trading technology stack, fully leveraging Rust's high performance, memory safety, and concurrency features to provide reliable technical support for quantitative trading. The platform consists of multiple independent but collaborative subsystems, supporting the entire quantitative trading process from market data access, market data distribution, strategy execution to trade execution.
 
-## 🌟 核心特性
+## 🌟 Core Features
 
-- **高性能架构**：基于Rust语言开发，实现毫秒级低延迟数据处理
-- **多源数据接入**：支持CTP、新浪财经、腾讯财经等多种市场数据源
-- **实时行情分发**：基于WebSocket的高效行情数据推送
-- **增量数据更新**：首次连接发送全量数据，之后仅推送变化的字段，大幅减少带宽消耗
-- **统一数据格式**：标准化不同来源的市场数据，提供一致的数据接口
-- **高性能时序数据库**：基于Arrow和DataFusion的时序数据存储和查询引擎
-- **分布式设计**：基于Actor模型的分布式并发处理架构
-- **安全可靠**：充分利用Rust的内存安全特性，提供稳定可靠的运行环境
-- **模块化组件**：各子系统可独立运行，也可协同工作
+- **High-Performance Architecture**: Developed in Rust, achieving millisecond-level low-latency data processing
+- **Multi-Source Data Access**: Support for various market data sources including CTP, Sina Finance, Tencent Finance, etc.
+- **Real-time Market Data Distribution**: Efficient market data streaming based on WebSocket
+- **Incremental Data Updates**: Send full data on first connection, then only push changed fields, greatly reducing bandwidth consumption
+- **Unified Data Format**: Standardize market data from different sources, providing consistent data interfaces
+- **High-Performance Time Series Database**: Time series data storage and query engine based on Apache Arrow and DataFusion
+- **Distributed Design**: Distributed concurrent processing architecture based on the Actor model
+- **Safe and Reliable**: Fully utilize Rust's memory safety features to provide a stable and reliable environment
+- **Modular Components**: Subsystems can operate independently or collaboratively
 
-## 📚 系统组成
+## 📚 System Components
 
-QAUTLRA-RS由以下主要组件构成：
+QAUTLRA-RS consists of the following major components:
 
-### 1. QAMDGATEWAY - 市场数据网关
+### 1. QAUTLRA-RS - Core Integration Component
 
-```
-写在前面：
+The central hub connecting various components of the QAUTLRA ecosystem, including market data gateways, trading systems, and client applications. It provides a high-performance WebSocket server for real-time market data distribution and trading services.
 
-首先致谢罗总的openctp提供的标准的行情接入 更多openctp的相关可以参考
+**Key Features**:
+- Real-time market data distribution via WebSocket
+- High-throughput data processing
+- Direct CTP integration 
+- Session management and subscription handling
+- WebSocket API for data streaming
 
-openctp 官网 [http://www.openctp.cn/]
+[Learn more about QAUTLRA-RS](qautlra-rs/README.md)
 
-openctp 的github  [https://github.com/openctp/openctp]
+### 2. QAMDGATEWAY - Market Data Gateway
 
-@yutiansut 
+The market data gateway is the data entry point for the entire system, responsible for connecting various market data sources, converting the data into a unified format, and distributing it to subscribers.
 
-```
+**Key Features**:
+- Connect and manage multiple market data sources
+- Convert raw market data into standard QAMD data structures
+- Real-time market data streaming via WebSocket
+- Provide REST API for subscription management
+- Support incremental data updates to significantly improve performance and reduce network traffic
 
-市场数据网关是整个系统的数据入口，负责连接各类市场数据源，并将数据转换为统一格式后分发给订阅者。
+**Sub-components**:
+- **qamdgateway-ctp**: Market data gateway connecting to CTP trading system
+- **qamdgateway-qq**: Market data gateway connecting to Tencent Finance
+- **qamdgateway-sina**: Market data gateway connecting to Sina Finance
 
-**主要功能**:
-- 连接和管理多个市场数据源
-- 将原始市场数据转换为标准QAMD数据结构
-- 通过WebSocket实时推送行情数据
-- 提供REST API用于订阅管理
-- 支持增量数据更新，大幅提升性能和减少网络流量
+### 3. QAREALTIMEPRO-RS - Real-time Data Processing
 
-**子组件**:
-- **qamdgateway-ctp**: 连接CTP交易系统的市场数据网关
-- **qamdgateway-qq**: 连接腾讯财经的市场数据网关
-- **qamdgateway-sina**: 连接新浪财经的市场数据网关
+QAREALTIMEPRO-RS is a high-performance real-time market data processing and distribution service. It serves as a central hub for connecting different market data sources, processing data in real-time, and distributing it to clients via WebSocket and REST APIs.
 
-### 2. QADB-RS - 高性能时序数据库
+**Key Features**:
+- Real-time data processing for both stock and futures markets
+- Trading account integration for position and PnL monitoring
+- REST and WebSocket APIs for data access
+- Redis integration for high-performance caching
+- Actor-based architecture for concurrency and resilience
 
-QADB-RS是一个专为量化交易设计的高性能时序数据库系统，基于Apache Arrow和DataFusion构建，实现了高效的金融市场数据存储和查询功能。
+[Learn more about QAREALTIMEPRO-RS](qarealtimepro-rs/README.md)
 
-**主要功能**:
-- 高效存储和管理大规模金融市场数据
-- 通过WebSocket客户端直接接收市场数据
-- 通过WebSocket服务端提供数据分发能力
-- 支持Kafka连接器从消息队列中获取数据(可选)
-- 自动管理动态数据模式(Schema)
-- 提供基于HTTP的查询API
-- 支持时间和自定义字段分区存储
-- 与量化交易引擎无缝集成
+### 4. QATRADESERVER-RS - Trading Gateway
 
-**技术特点**:
-- 基于Apache Arrow的柱状存储格式
-- 使用DataFusion高性能查询引擎
-- 支持毫秒级市场数据的高速写入和查询
-- 优化的时间序列数据压缩算法
-- 分区存储提升查询效率
+QATRADESERVER-RS is a high-performance trading server that acts as a centralized trading gateway, managing connections to multiple brokers, handling trade execution requests, and providing real-time trade updates.
 
-### 3. QAMD-RS - 市场数据处理库
+**Key Features**:
+- Multi-broker gateway for centralized access to various exchanges
+- Order routing to appropriate brokers
+- Load balancing for trading requests
+- High availability design
+- WebSocket and REST APIs for trade operations
+- Authentication and rate limiting for security
 
-市场数据处理库提供了标准化的数据结构和处理工具，用于处理和转换各类市场数据。
+[Learn more about QATRADESERVER-RS](qatradeserver-rs/README.md)
 
-**主要功能**:
-- 定义标准化的市场数据结构
-- 提供数据转换和处理工具
-- 支持不同来源数据的格式转换
+### 5. QATRADER-RS - Trading Engine
 
-### 4. QARS - 量化交易引擎核心库
+QATRADER-RS is a high-performance trading order management and execution system. It serves as the core trading engine, handling order routing, execution, risk management, and position tracking.
 
-QARS是系统的核心计算引擎，提供量化分析和交易策略执行的功能。
+**Key Features**:
+- High-performance trading with low-latency execution
+- Support for multiple brokers and trading venues
+- Event-driven architecture for concurrent processing
+- Pre-trade and post-trade risk management
+- Real-time position tracking and PnL monitoring
+- Message queue integration for order flow
 
-**主要功能**:
-- 高性能回测引擎
-- 因子计算和分析工具
-- 策略执行引擎
-- 支持与Python交互的接口
+[Learn more about QATRADER-RS](qatrader-rs/README.md)
 
-### 5. QIFI-RS - 金融交易接口标准
+### 6. QAMAINTAINDB-RS - Financial Performance Analysis
 
-QIFI-RS是Quantaxis Financial Interface的Rust实现，提供标准化的金融交易接口协议。
+QAMAINTAINDB-RS is a specialized tool for maintaining and analyzing financial product performance data. It provides a robust API for data ingestion, performance calculation, and comparison analysis.
 
-**主要功能**:
-- 定义标准账户数据结构
-- 提供快速的数据序列化和反序列化
-- 支持从JSON/BSON格式加载和转换数据
-- 兼容MongoDB数据库操作
+**Key Features**:
+- Excel data import for financial product data
+- Comprehensive performance metrics calculation
+- Product comparison over specified time periods
+- Date range filtering for analysis
+- Actor-based parallel computation
+- MongoDB integration for data persistence
 
-### 6. CTP-MD - CTP市场数据接口
+[Learn more about QAMAINTAINDB-RS](qamaintaindb-rs/README.md)
 
-CTP市场数据接口提供了连接中国金融期货交易所CTP系统的Rust绑定。
+### 7. QADB-RS - High-Performance Time Series Database
 
-**主要功能**:
-- 提供CTP API的Rust封装
-- 实现CTP市场数据的接收和处理
-- 支持多种期货合约的订阅
+QADB-RS is a high-performance time series database system designed specifically for quantitative trading, built on Apache Arrow and DataFusion, enabling efficient storage and querying of financial market data.
 
-### 7. QAOMS - 量化交易前端系统
+**Key Features**:
+- Efficient storage and management of large-scale financial market data
+- Receive market data directly via WebSocket client
+- Distribute data via WebSocket server
+- Support Kafka connector to receive data from message queues (optional)
+- Automatic management of dynamic data schemas
+- Provide HTTP-based query API
+- Support time and custom field partitioned storage
+- Seamless integration with quantitative trading engine
 
-量化交易前端系统提供了用户交互界面，包括行情显示、交易操作和策略管理等功能。
+**Technical Highlights**:
+- Columnar storage format based on Apache Arrow
+- High-performance query engine with DataFusion
+- High-speed writing and querying of millisecond-level market data
+- Optimized time series data compression algorithms
+- Partitioned storage to improve query efficiency
 
-**主要功能**:
-- 行情数据可视化
-- 交易操作界面
-- 策略管理和监控
-- 账户和持仓展示
+### 8. QAMD-RS - Market Data Processing Library
 
-## 🔧 系统架构
+The market data processing library provides standardized data structures and processing tools for handling and converting various types of market data.
+
+**Key Features**:
+- Define standardized market data structures
+- Provide data conversion and processing tools
+- Support format conversion for data from different sources
+
+### 9. QARS - Quantitative Trading Engine Core Library
+
+QARS is the core computation engine of the system, providing quantitative analysis and trading strategy execution functions.
+
+**Key Features**:
+- High-performance backtesting engine
+- Factor calculation and analysis tools
+- Strategy execution engine
+- Interface supporting Python interaction
+
+### 10. QIFI-RS - Financial Interface Standard
+
+QIFI-RS is the Rust implementation of Quantaxis Financial Interface, providing a standardized financial trading interface protocol.
+
+**Key Features**:
+- Define standard account data structures
+- Provide fast data serialization and deserialization
+- Support loading and converting data from JSON/BSON format
+- Compatible with MongoDB database operations
+
+### 11. CTP-MD - CTP Market Data Interface
+
+The CTP market data interface provides Rust bindings for connecting to the CTP system of China Financial Futures Exchange.
+
+**Key Features**:
+- Provide Rust wrapper for CTP API
+- Implement reception and processing of CTP market data
+- Support subscription to various futures contracts
+
+### 12. QAOMS - Quantitative Trading Frontend System
+
+The quantitative trading frontend system provides a user interface, including market data display, trading operations, and strategy management.
+
+**Key Features**:
+- Market data visualization
+- Trading operation interface
+- Strategy management and monitoring
+- Account and position display
+
+## 🔧 System Architecture
 
 ```
                                   ┌───────────────────┐
@@ -156,52 +211,83 @@ CTP市场数据接口提供了连接中国金融期货交易所CTP系统的Rust�
 └─────────────────┘                 └──────────────────┘
 ```
 
-## 📦 安装指南
+## 📦 Installation Guide
 
-### 环境要求
+### Requirements
 
-- Rust (推荐版本: 1.70+)
+- Rust (recommended version: 1.70+)
 - Cargo
-- CMake (用于编译CTP相关依赖)
-- GCC/Clang (C++编译器)
-- Node.js (用于前端系统)
+- CMake (for compiling CTP-related dependencies)
+- GCC/Clang (C++ compiler)
+- Node.js (for frontend system)
+- MongoDB
+- Redis
+- RabbitMQ
 
-### 从源码构建
+### Building from Source
 
-1. 克隆仓库：
+1. Clone the repository:
 
 ```bash
 git clone https://github.com/yutiansut/qautlra-rs.git
 cd qautlra-rs
 ```
 
-2. 构建市场数据网关：
+2. Build the market data gateway:
 
 ```bash
-# 构建支持CTP的市场数据网关
+# Build market data gateway with CTP support
 QAMDGATEWAY_CONFIG_PATH=config_ctp.json cargo run -p qamdgateway --no-default-features --features="ctp"
 
-# 构建支持QQ财经的市场数据网关
+# Build market data gateway with Tencent Finance support
 QAMDGATEWAY_CONFIG_PATH=config_qq.json cargo run -p qamdgateway --no-default-features --features="qq"
 
-# 构建支持新浪财经的市场数据网关
+# Build market data gateway with Sina Finance support
 QAMDGATEWAY_CONFIG_PATH=config_sina.json cargo run -p qamdgateway --no-default-features --features="sina"
 ```
 
-3. 构建并运行QADB-RS时序数据库：
+3. Build and run the QADB-RS time series database:
 
 ```bash
-# 构建完整功能
+# Build with full functionality
 cargo build -p qadb-rs --release
 
-# 只启用WebSocket功能
+# Build with WebSocket functionality only
 cargo build -p qadb-rs --release --features="websocket"
 
-# 运行QADB-RS服务
+# Run QADB-RS service
 QADB_DATA_DIR=/path/to/data ./target/release/qadb-rs --mode all --websocket-enabled
 ```
 
-4. 构建前端系统：
+4. Build and run QARealTimePro-RS:
+
+```bash
+cargo build -p qarealtimepro-rs --release
+cargo run -p qarealtimepro-rs --release
+```
+
+5. Build and run QATrader-RS:
+
+```bash
+cargo build -p qatrader-rs --release
+cargo run -p qatrader-rs --release
+```
+
+6. Build and run QATradeServer-RS:
+
+```bash
+cargo build -p qatradeserver-rs --release
+cargo run -p qatradeserver-rs --release
+```
+
+7. Build and run QAMaintainDB-RS:
+
+```bash
+cargo build -p qamaintaindb-rs --release
+cargo run -p qamaintaindb-rs --release
+```
+
+8. Build the frontend system:
 
 ```bash
 cd qaoms/web
@@ -209,11 +295,11 @@ npm install
 npm run dev
 ```
 
-## ⚙️ 配置
+## ⚙️ Configuration
 
-配置文件位于项目根目录的`config.json`及其变体文件中，包含以下主要配置：
+Configuration files are located in the root directory of the project, including `config.json` and its variants, containing the following main configurations:
 
-### CTP市场数据网关配置示例
+### CTP Market Data Gateway Configuration Example
 
 ```json
 {
@@ -244,139 +330,47 @@ npm run dev
 }
 ```
 
-### QADB-RS配置示例
+### QADB-RS Configuration Example
 
 ```json
 {
-  "storage": {
-    "data_dir": "/path/to/data",
-    "retention_days": 30,
-    "compression": "zstd"
-  },
+  "data_directory": "/path/to/data",
   "websocket": {
     "enabled": true,
-    "address": "0.0.0.0",
-    "port": 8765,
-    "path": "/ws",
-    "stream_name": "market_data",
-    "client_enabled": true,
-    "client_host": "localhost",
-    "client_port": 8014,
-    "client_path": "/ws/market",
-    "client_instruments": ["au2512", "rb2512"]
-  },
-  "server": {
     "host": "0.0.0.0",
-    "port": 8080
+    "port": 8016,
+    "path": "/ws/db"
+  },
+  "http_api": {
+    "enabled": true,
+    "host": "0.0.0.0",
+    "port": 8017
+  },
+  "kafka": {
+    "enabled": false,
+    "brokers": ["localhost:9092"],
+    "topics": ["market_data"]
+  },
+  "schema_management": {
+    "auto_detect": true,
+    "schema_cache_size": 100
+  },
+  "storage": {
+    "partition_by": "date",
+    "compression": "zstd",
+    "retention_days": 365
   }
 }
 ```
 
-## 🚀 使用指南
+## 📝 License
 
-### 订阅市场数据
+[License information]
 
-平台提供了三种WebSocket连接端点：
+## 👥 Contributing
 
-1. CTP行情：`ws://localhost:8014/ws/market`
-2. QQ行情：`ws://localhost:8016/ws/market`
-3. 新浪行情：`ws://localhost:8012/ws/market`
+Contributions are welcome! Please feel free to submit a Pull Request.
 
-#### WebSocket订阅示例
+## 📬 Contact
 
-```javascript
-// 创建WebSocket连接
-const ws = new WebSocket("ws://localhost:8014/ws/market");
-
-// 订阅合约
-ws.onopen = function() {
-  const subscribeMsg = {
-    "aid": "subscribe_quote",
-    "ins_list": "au2512,rb2512,IF2506"
-  };
-  ws.send(JSON.stringify(subscribeMsg));
-};
-
-// 接收行情数据
-ws.onmessage = function(evt) {
-  const data = JSON.parse(evt.data);
-  console.log("接收到行情数据:", data);
-};
-```
-
-### 使用QADB-RS存储和查询数据
-
-#### 配置QADB-RS作为WebSocket客户端
-
-```bash
-# 通过环境变量配置
-export QADB_WS_CLIENT_ENABLED=true
-export QADB_WS_CLIENT_HOST=localhost
-export QADB_WS_CLIENT_PORT=8014
-export QADB_WS_CLIENT_PATH=/ws/market
-export QADB_WS_CLIENT_STREAM=futures_market
-export QADB_WS_CLIENT_INSTRUMENTS=au2512,rb2512,IF2506
-
-# 启动QADB-RS
-./target/release/qadb-rs --mode ingest
-```
-
-#### 通过HTTP API查询数据
-
-```bash
-# 查询最近1小时的期货行情数据
-curl -X GET "http://localhost:8080/api/v1/query" \
-  -H "Content-Type: application/json" \
-  -d '{
-    "stream": "futures_market",
-    "start_time": "1h-ago",
-    "end_time": "now",
-    "limit": 1000,
-    "filter": "instrument='au2512'"
-  }'
-```
-
-#### 处理增量数据更新
-
-```javascript
-// 客户端维护完整的行情快照
-const marketDataSnapshots = {};
-
-ws.onmessage = function(evt) {
-  const data = JSON.parse(evt.data);
-  
-  // 处理每个合约的数据
-  for (const instrument in data) {
-    if (instrument === "aid") continue;
-    
-    // 如果是新合约，创建快照
-    if (!marketDataSnapshots[instrument]) {
-      marketDataSnapshots[instrument] = {};
-    }
-    
-    // 更新快照中的字段
-    for (const field in data[instrument]) {
-      marketDataSnapshots[instrument][field] = data[instrument][field];
-    }
-    
-    // 使用更新后的完整快照
-    processMarketData(instrument, marketDataSnapshots[instrument]);
-  }
-};
-```
-
-## 📊 性能指标
-
-- 市场数据网关可处理每秒10000+条行情更新
-- QADB-RS支持每秒100000+条时序数据点的写入
-- 查询性能可达亚毫秒级别响应时间（取决于查询复杂度和数据量）
-
-## 🔍 进一步了解
-
-- [QAdb-rs详细文档](qadb-rs/README.md)
-- [市场数据网关开发指南](docs/mdgateway-development.md)
-- [量化策略开发指南](docs/strategy-development.md)
-
-## 📄 许可证
-
-QAUTLRA-RS采用GNU Affero通用公共许可证v3.0（AGPL-3.0）进行许可。
+For questions or support, please contact [contact information]
